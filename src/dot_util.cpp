@@ -95,7 +95,7 @@ void update_ota_config_name_phrase(std::string network_name, std::string network
     }
 }
 
-void update_ota_config_id_key(uint8_t *network_id, uint8_t *network_key, uint8_t frequency_sub_band, bool public_network, uint8_t ack) {
+void update_ota_config_id_key(const uint8_t *network_id, const uint8_t *network_key, uint8_t frequency_sub_band, bool public_network, uint8_t ack) {
     std::vector<uint8_t> current_network_id = dot->getNetworkId();
     std::vector<uint8_t> current_network_key = dot->getNetworkKey();
     uint8_t current_frequency_sub_band = dot->getFrequencySubBand();

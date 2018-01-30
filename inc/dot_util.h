@@ -12,7 +12,7 @@ void display_config();
 
 void update_ota_config_name_phrase(std::string network_name, std::string network_passphrase, uint8_t frequency_sub_band, bool public_network, uint8_t ack);
 
-void update_ota_config_id_key(uint8_t *network_id, uint8_t *network_key, uint8_t frequency_sub_band, bool public_network, uint8_t ack);
+void update_ota_config_id_key(const uint8_t *network_id, const uint8_t *network_key, uint8_t frequency_sub_band, bool public_network, uint8_t ack);
 
 void update_manual_config(uint8_t *network_address, uint8_t *network_session_key, uint8_t *data_session_key, uint8_t frequency_sub_band, bool public_network, uint8_t ack);
 
