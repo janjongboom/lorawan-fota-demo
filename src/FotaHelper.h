@@ -182,9 +182,11 @@ void send_packet(UplinkMessage* message) {
     }
 
     if (ret != mDot::MDOT_OK) {
-        logError("failed to send data to %s [%d][%s]", dot->getJoinMode() == mDot::PEER_TO_PEER ? "peer" : "gateway", ret, mDot::getReturnCodeString(ret).c_str());
+        printf("[ERROR] Failed to send data to %s [%d][%s]\n", dot->getJoinMode() == mDot::PEER_TO_PEER ? "peer" : "gateway", ret, mDot::getReturnCodeString(ret).c_str());
     } else {
-        logInfo("successfully sent data to %s", dot->getJoinMode() == mDot::PEER_TO_PEER ? "peer" : "gateway");
+        if (m->is_mac) {
+            printf("successfully sent data to gateway\n");
+        }
     }
 
     // Message was sent, or was not mac message? remove from queue

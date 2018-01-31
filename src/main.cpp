@@ -20,7 +20,7 @@
 #include "FotaHelper.h"
 #include "CayenneLPP.h"
 
-#define APP_VERSION         28
+#define APP_VERSION         30
 #define IS_NEW_APP          0
 
 using namespace std;

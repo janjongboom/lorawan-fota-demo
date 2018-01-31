@@ -274,13 +274,12 @@ private:
                         InvokeClassASwitch();
 
                         // Calculate the CRC of the data in flash to see if the file was unpacked correctly
-                        // CRC64 of the original file is 150eff2bcd891e18 (see fake-fw/test-crc64/main.cpp)
                         uint8_t crc_buffer[128];
 
                         FragmentationCrc64 crc64(&at45, crc_buffer, sizeof(crc_buffer));
                         uint64_t crc_res = crc64.calculate(frag_opts.FlashOffset, (frag_opts.NumberOfFragments * frag_opts.FragmentSize) - frag_opts.Padding);
 
-                        printf("Hash is %08llx\n", crc_res);
+                        // printf("Hash is: %08llx\n", crc_res);
 
                         // Write the parameters to flash; but don't set update_pending yet (only after verification by the network)
                         UpdateParams_t update_params;
@@ -336,6 +335,8 @@ private:
                 // fragindex and success bit are on info->RxBuffer[1]
                 if (info->RxBufferSize == 2) {
                     // not good!
+                    printf("Hash mismatch!\n");
+                    print_blockdevice_content(&at45, frag_opts.FlashOffset, (frag_opts.NumberOfFragments * frag_opts.FragmentSize) - frag_opts.Padding, 512);
                 }
                 else {
                     // do MIC check...
