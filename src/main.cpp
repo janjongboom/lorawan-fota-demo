@@ -21,15 +21,32 @@
 #include "CayenneLPP.h"
 
 #define APP_VERSION         28
-#define IS_NEW_APP          1
+#define IS_NEW_APP          0
 
 using namespace std;
 
 mDot* dot = NULL;
 
-static mbed_stats_heap_t heap_stats;
-
+// For an overview of all the pins, see https://os.mbed.com/platforms/L-TEK-FF1705/
+AnalogIn moisture(PA_0);
+AnalogIn thermistor(GPIO2);
 DigitalOut led(LED1);
+
+float read_temperature() {
+    unsigned int a, beta = 3975;
+    float temperature, resistance;
+
+    a = thermistor.read_u16(); /* Read analog value */
+
+    /* Calculate the resistance of the thermistor from analog votage read. */
+    resistance = (float) 10000.0 * ((65536.0 / a) - 1.0);
+
+    /* Convert the resistance to temperature using Steinhart's Hart equation */
+    temperature = (1/((log(resistance/10000.0)/beta) + (1.0/298.15)))-273.15;
+
+    return temperature;
+}
+
 void blink() {
     led = !led;
 }
@@ -98,10 +115,6 @@ int main() {
         dot->restoreNetworkSession();
     }
 
-    mbed_stats_heap_t heap_stats;
-    mbed_stats_heap_get(&heap_stats);
-    printf("Heap stats: Used %lu / %lu bytes\n", heap_stats.current_size, heap_stats.reserved_size);
-
     while (true) {
         if (!in_class_c_mode) {
 
@@ -118,26 +131,23 @@ int main() {
             }
 
             // send some data in CayenneLPP format
-            static AnalogIn moisture(GPIO2);
-            static float last_reading = 0.0f;
-
-            float moisture_value = moisture.read();
-
             CayenneLPP payload(50);
             payload.addAnalogOutput(1, moisture.read());
+            payload.addTemperature(2, read_temperature());
+            payload.addDigitalOutput(3, APP_VERSION);
 
+            // Copy Cayenne buffer
             vector<uint8_t>* tx_data = new vector<uint8_t>();
             for (size_t ix = 0; ix < payload.getSize(); ix++) {
                 tx_data->push_back(payload.getBuffer()[ix]);
             }
 
+            // Queue uplink message
             UplinkMessage* uplink = new UplinkMessage();
             uplink->port = 5;
             uplink->data = tx_data;
 
             send_packet(uplink);
-
-            last_reading = moisture_value;
         }
 
         uint32_t sleep_time = calculate_actual_sleep_time(3 + (rand() % 8));

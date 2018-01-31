@@ -167,7 +167,7 @@ public:
 
         mbed_stats_heap_t heap_stats;
         mbed_stats_heap_get(&heap_stats);
-        printf("Heap stats: Used %lu / %lu bytes\n", heap_stats.current_size, heap_stats.reserved_size);
+        // printf("Heap stats: Used %lu / %lu bytes\n", heap_stats.current_size, heap_stats.reserved_size);
     }
 
     void UpdateClassACredentials(LoRaWANCredentials_t* credentials) {
@@ -190,7 +190,7 @@ private:
             {
                 mbed_stats_heap_t heap_stats;
                 mbed_stats_heap_get(&heap_stats);
-                printf("Heap stats: Used %lu / %lu bytes\n", heap_stats.current_size, heap_stats.reserved_size);
+                // printf("Heap stats: Used %lu / %lu bytes\n", heap_stats.current_size, heap_stats.reserved_size);
 
                 if(info->RxBufferSize != FRAG_SESSION_SETUP_REQ_LENGTH) {
                     logError("Invalid FRAG_SESSION_SETUP_REQ command");
@@ -235,7 +235,7 @@ private:
                 }
 
                 mbed_stats_heap_get(&heap_stats);
-                printf("Heap stats: Used %lu / %lu bytes\n", heap_stats.current_size, heap_stats.reserved_size);
+                // printf("Heap stats: Used %lu / %lu bytes\n", heap_stats.current_size, heap_stats.reserved_size);
 
                 frag_session = new FragmentationSession(&at45, frag_opts);
                 FragResult result = frag_session->initialize();
@@ -249,7 +249,7 @@ private:
                 has_received_frag_session = true;
 
                 mbed_stats_heap_get(&heap_stats);
-                printf("Heap stats: Used %lu / %lu bytes\n", heap_stats.current_size, heap_stats.reserved_size);
+                // printf("Heap stats: Used %lu / %lu bytes\n", heap_stats.current_size, heap_stats.reserved_size);
             }
             break;
 
@@ -269,7 +269,7 @@ private:
 
                         mbed_stats_heap_t heap_stats;
                         mbed_stats_heap_get(&heap_stats);
-                        printf("Heap stats: Used %lu / %lu bytes\n", heap_stats.current_size, heap_stats.reserved_size);
+                        // printf("Heap stats: Used %lu / %lu bytes\n", heap_stats.current_size, heap_stats.reserved_size);
 
                         InvokeClassASwitch();
 
@@ -416,7 +416,7 @@ private:
 
                         mbed_stats_heap_t heap_stats;
                         mbed_stats_heap_get(&heap_stats);
-                        printf("Heap stats: Used %lu / %lu bytes\n", heap_stats.current_size, heap_stats.reserved_size);
+                        // printf("Heap stats: Used %lu / %lu bytes\n", heap_stats.current_size, heap_stats.reserved_size);
 
                         // now check that the signature is correct...
                         {
@@ -549,6 +549,12 @@ private:
                         }
                     }
 
+                    // HACK! TO TEST MULTICAST. DO NOT USE IN PRODUCTION!
+                    if (class_c_session_params.UlFCountRef == 0xff) {
+                        ulEvent = uplinkEvents[9];
+                        foundUlEvent = true;
+                    }
+
                     if (!foundUlEvent) {
                         logError("UlFCountRef %d not found in uplinkEvents array", class_c_session_params.UlFCountRef);
                         status += 0b00000100;
@@ -588,12 +594,6 @@ private:
     }
 
     void InvokeClassCSwitch() {
-        // no frag_session? abort
-        if (frag_session == NULL) {
-            logError("Refusing class C switch. No frag_session");
-            return;
-        }
-
         class_switch_cb('C');
     }
 
@@ -668,6 +668,10 @@ private:
                 }
                 else if (info->RxPort == 201) {
                     processFragmentationMacCommand(flags, info);
+                }
+                else {
+                    printf("[INFO] RX %d bytes on port %d: ", info->RxBufferSize, info->RxPort);
+                    printf("%s\n", mts::Text::bin2hexString(info->RxBuffer, info->RxBufferSize).c_str());
                 }
             }
         }

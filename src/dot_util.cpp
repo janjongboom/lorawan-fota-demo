@@ -283,7 +283,7 @@ void join_network() {
 
             mbed_stats_heap_t heap_stats;
             mbed_stats_heap_get(&heap_stats);
-            printf("Heap stats: Used %lu / %lu bytes\n", heap_stats.current_size, heap_stats.reserved_size);
+            // printf("Heap stats: Used %lu / %lu bytes\n", heap_stats.current_size, heap_stats.reserved_size);
 
             // in some frequency bands we need to wait until another channel is available before transmitting again
             uint32_t delay_s = (dot->getNextTxMs() / 1000) + 1;
