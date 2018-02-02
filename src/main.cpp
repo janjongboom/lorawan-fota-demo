@@ -20,7 +20,7 @@
 #include "FotaHelper.h"
 #include "CayenneLPP.h"
 
-#define APP_VERSION         30
+#define APP_VERSION         32
 #define IS_NEW_APP          0
 
 using namespace std;
@@ -69,51 +69,44 @@ int main() {
     // attach the custom events handler
     dot->setEvents(&radio_events);
 
-    if (!dot->getStandbyFlag()) {
-        // start from a well-known state
-        logInfo("defaulting Dot configuration");
-        dot->resetConfig();
-        dot->resetNetworkSession();
+    // start from a well-known state
+    logInfo("defaulting Dot configuration");
+    dot->resetConfig();
+    dot->resetNetworkSession();
 
-        logInfo("setting data rate to %d", tx_data_rate);
-        if (dot->setTxDataRate(tx_data_rate) != mDot::MDOT_OK) {
-            logError("failed to set data rate");
-        }
+    printf("[INFO] Device EUI: %s", mts::Text::bin2hexString(dot->getDeviceId()).c_str());
 
-        logInfo("setting join RX2 data rate to %d", join_rx2_data_rate);
-        if (dot->setJoinRx2DataRate(join_rx2_data_rate) != mDot::MDOT_OK) {
-            logError("failed to set join RX2 data rate");
-        }
-
-        // update configuration if necessary
-        if (dot->getJoinMode() != mDot::OTA) {
-            logInfo("changing network join mode to OTA");
-            if (dot->setJoinMode(mDot::OTA) != mDot::MDOT_OK) {
-                logError("failed to set network join mode to OTA");
-            }
-        }
-        update_ota_config_id_key(network_id, network_key, frequency_sub_band, true, false /*ack*/);
-
-        dot->setAdr(false); // @todo enable
-
-        dot->setDisableDutyCycle(true);
-
-        // save changes to configuration
-        logInfo("saving configuration");
-        if (!dot->saveConfig()) {
-            logError("failed to save configuration");
-        }
-
-        // display configuration
-        display_config();
-
-        dot->setLogLevel(mts::MTSLog::ERROR_LEVEL);
-    } else {
-        // restore the saved session if the dot woke from deepsleep mode
-        // useful to use with deepsleep because session info is otherwise lost when the dot enters deepsleep
-        logInfo("restoring network session from NVM");
-        dot->restoreNetworkSession();
+    logInfo("setting data rate to %d", tx_data_rate);
+    if (dot->setTxDataRate(tx_data_rate) != mDot::MDOT_OK) {
+        logError("failed to set data rate");
     }
+
+    logInfo("setting join RX2 data rate to %d", join_rx2_data_rate);
+    if (dot->setJoinRx2DataRate(join_rx2_data_rate) != mDot::MDOT_OK) {
+        logError("failed to set join RX2 data rate");
+    }
+
+    // update configuration if necessary
+    if (dot->getJoinMode() != mDot::OTA) {
+        logInfo("changing network join mode to OTA");
+        if (dot->setJoinMode(mDot::OTA) != mDot::MDOT_OK) {
+            logError("failed to set network join mode to OTA");
+        }
+    }
+    update_ota_config_id_key(network_id, network_key, frequency_sub_band, true, false /*ack*/);
+
+    dot->setAdr(false);
+
+    // save changes to configuration
+    logInfo("saving configuration");
+    if (!dot->saveConfig()) {
+        logError("failed to save configuration");
+    }
+
+    // display configuration
+    display_config();
+
+    dot->setLogLevel(mts::MTSLog::ERROR_LEVEL);
 
     while (true) {
         if (!in_class_c_mode) {
@@ -125,9 +118,6 @@ int main() {
                 LoRaWANCredentials_t creds;
                 get_current_credentials(&creds);
                 radio_events.OnClassAJoinSucceeded(&creds);
-
-                // turn duty cycle back on after joining
-                dot->setDisableDutyCycle(false);
             }
 
             // send some data in CayenneLPP format
@@ -136,21 +126,10 @@ int main() {
             payload.addTemperature(2, read_temperature());
             payload.addDigitalOutput(3, APP_VERSION);
 
-            // Copy Cayenne buffer
-            vector<uint8_t>* tx_data = new vector<uint8_t>();
-            for (size_t ix = 0; ix < payload.getSize(); ix++) {
-                tx_data->push_back(payload.getBuffer()[ix]);
-            }
-
-            // Queue uplink message
-            UplinkMessage* uplink = new UplinkMessage();
-            uplink->port = 5;
-            uplink->data = tx_data;
-
-            send_packet(uplink);
+            send_packet(&payload, 5 /*port*/);
         }
 
-        uint32_t sleep_time = calculate_actual_sleep_time(3 + (rand() % 8));
+        uint32_t sleep_time = calculate_actual_sleep_time(10 + (rand() % 8));
         // logInfo("going to wait %d seconds for duty-cycle...", sleep_time);
 
         // @todo: in class A can go to deepsleep, in class C cannot

@@ -4,6 +4,7 @@
 #include "mbed.h"
 #include "mDot.h"
 #include "RadioEvent.h"
+#include "CayenneLPP.h"
 
 // // fwd declaration
 void send_mac_msg(uint8_t port, vector<uint8_t>* data);
@@ -212,6 +213,21 @@ void send_packet(UplinkMessage* message) {
         // switch to class A credentials
         set_class_c_creds();
     }
+}
+
+void send_packet(CayenneLPP* payload, uint8_t port) {
+    // Copy Cayenne buffer
+    vector<uint8_t>* tx_data = new vector<uint8_t>();
+    for (size_t ix = 0; ix < payload->getSize(); ix++) {
+        tx_data->push_back(payload->getBuffer()[ix]);
+    }
+
+    // Queue uplink message
+    UplinkMessage* uplink = new UplinkMessage();
+    uplink->port = 5;
+    uplink->data = tx_data;
+
+    send_packet(uplink);
 }
 
 void send_mac_msg(uint8_t port, std::vector<uint8_t>* data) {
